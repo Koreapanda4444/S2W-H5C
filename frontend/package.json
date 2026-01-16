@@ -10,5 +10,11 @@
   },
   "devDependencies": {
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "chart.js": "^4.4.1",
+    "s2w-h5c-frontend": "file:",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
   }
 }

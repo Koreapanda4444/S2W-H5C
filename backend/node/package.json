@@ -8,9 +8,16 @@
     "start": "node dist/server.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "s2w-h5c-frontend": "file:../../frontend",
+    "ssh2": "^1.17.0",
+    "ws": "^8.19.0"
   },
   "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.10.10",
+    "@types/ssh2": "^1.11.20",
+    "@types/ws": "^8.5.13",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3"
   }

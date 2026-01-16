@@ -2,65 +2,71 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI-Driven Data Center – 아이디어톤 초안</title>
-  <link rel="stylesheet" href="./styles.css"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>H5C Ops Dashboard</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="stylesheet" href="./vendor/xterm.css" />
+  <script src="./vendor/chart.umd.js" defer></script>
+  <script src="./vendor/xterm.js" defer></script>
+  <script src="./vendor/xterm-addon-fit.js" defer></script>
 </head>
 <body>
   <header class="top">
     <div class="container top-row">
       <div class="brand">
-        <div class="logo">DC</div>
+        <div class="logo">H5C</div>
         <div>
-          <div class="title">AI-Driven Data Center</div>
-          <div class="subtitle">Energy & Cooling + Self-Healing 운영 초안</div>
+          <div class="title">Ops Dashboard</div>
+          <div class="subtitle">Emoji · CPU/RAM/DISK/IO · SHELL · SSH</div>
         </div>
       </div>
-
-      <nav class="nav">
-        <a href="#hardware">Hardware</a>
-        <a href="#software">Software & AI</a>
-        <a href="#dashboard">Emoji Dashboard</a>
-        <a href="#stack">Tech Stack</a>
-      </nav>
     </div>
   </header>
 
   <main class="container">
-    <section class="hero">
-      <div class="hero-left">
-        <h1>
-          전력·냉각 비용을 줄이고<br/>
-          장애는 AI가 먼저 잡는 데이터센터
-        </h1>
-        <p class="muted">
-          “장애 발생 후 대응”이 아니라 “장애 발생 전 예측 + 자동 안정화(Self-Healing)”를 목표로 한
-          아이디어톤용 콘셉트 페이지입니다.
-        </p>
-
-        <div class="hero-actions">
-          <button id="btnMock" class="btn ghost" type="button">모의 데이터(데모) ON</button>
-          <button id="btnOnce" class="btn" type="button">1회 업데이트</button>
-          <a class="btn outline" href="#dashboard">대시보드로</a>
+    <section class="ops">
+      <div class="ops-grid">
+        <div class="card ops-emoji">
+          <div class="ops-emoji-big" id="emoji">🙂</div>
+          <div class="ops-emoji-title" id="statusText">정상</div>
+          <div class="muted small" id="statusHint">모니터링 중</div>
+          <div class="small muted" id="updatedAt">업데이트: --</div>
         </div>
 
-        <div class="pill-row">
-          <span class="pill">PUE 개선</span>
-          <span class="pill">폐열 재활용</span>
-          <span class="pill">재생에너지 마이크로그리드</span>
-          <span class="pill">Tier 기반 백업</span>
-          <span class="pill">Self-Healing</span>
-        </div>
+        <div class="card ops-metrics">
+          <div class="ops-metrics-head">
+            <h3>성능 상태</h3>
+            <div class="ops-source-pill" id="metricsSource">source: local</div>
+          </div>
 
-        <div class="small muted">
-          * 백엔드를 켜면 실시간 API(`/api/metrics`)로 갱신됩니다. 백엔드가 없으면 데모로 동작.
-        </div>
-      </div>
+          <div class="ops-source-controls">
+            <input id="monitorUrl" class="input" placeholder="EC2 /monitor URL (예: http://3.36.74.135:5000/monitor)" />
+            <button id="btnUseLocal" class="btn outline" type="button">LOCAL</button>
+            <button id="btnUseMonitor" class="btn" type="button">EC2 연결</button>
+            <span class="small muted" id="monitorState">대기</span>
+          </div>
 
-      <div class="hero-right">
-        <div class="card kpi">
-          <div class="kpi-title">실시간 운영 요약</div>
-          <div class="kpi-grid">
+          <div class="ops-agentlog-head">
+            <div class="small muted">Agent 로그 (client.py /logs)</div>
+            <div class="ops-agentlog-actions">
+              <button id="btnLogClear" class="btn outline" type="button">로그 지우기</button>
+              <button id="btnLogCsv" class="btn outline" type="button">CSV 저장</button>
+              <span class="small muted" id="agentLogState">대기</span>
+            </div>
+          </div>
+          <pre id="agentLog" class="ops-agentlog" aria-label="agent logs"></pre>
+
+          <div class="ops-agentlog-head">
+            <div class="small muted">AI 이벤트 · Self-Healing</div>
+            <div class="ops-agentlog-actions">
+              <button id="btnSelfHeal" class="btn outline" type="button">OFF</button>
+              <button id="btnAiClear" class="btn outline" type="button">지우기</button>
+              <span class="small muted" id="selfHealState">OFF</span>
+            </div>
+          </div>
+          <pre id="aiLog" class="ops-agentlog" aria-label="ai events"></pre>
+
+          <div class="ops-kpi">
             <div class="kpi-item">
               <div class="kpi-label">CPU</div>
               <div class="kpi-value"><span id="cpuVal">--</span>%</div>
@@ -72,253 +78,71 @@
               <div class="bar"><div id="ramBar" class="fill"></div></div>
             </div>
             <div class="kpi-item">
-              <div class="kpi-label">TEMP</div>
-              <div class="kpi-value"><span id="tempVal">--</span>°C</div>
-              <div class="bar"><div id="tempBar" class="fill"></div></div>
+              <div class="kpi-label">DISK</div>
+              <div class="kpi-value"><span id="diskVal">--</span>%</div>
+              <div class="bar"><div id="diskBar" class="fill"></div></div>
             </div>
             <div class="kpi-item">
-              <div class="kpi-label">NET</div>
-              <div class="kpi-value"><span id="netVal">--</span> ms</div>
-              <div class="bar"><div id="netBar" class="fill"></div></div>
+              <div class="kpi-label">IO</div>
+              <div class="kpi-value"><span id="ioVal">--</span>%</div>
+              <div class="bar"><div id="ioBar" class="fill"></div></div>
             </div>
           </div>
 
-          <div class="kpi-footer">
-            <div class="emoji-line">
-              <span class="emoji" id="emoji">🙂</span>
-              <div>
-                <div class="emoji-title" id="statusText">정상</div>
-                <div class="muted small" id="statusHint">대시보드에서 조치 확인</div>
-              </div>
-            </div>
-            <div class="small muted" id="updatedAt">업데이트: --</div>
+          <div class="chart-wrap ops-chart">
+            <canvas id="chartMain"></canvas>
           </div>
+        </div>
+
+        <div class="card ops-cli">
+          <div class="ops-cli-head">
+            <h3>터미널</h3>
+            <div class="tabs">
+              <button id="tabAws" class="tab active" type="button">SHELL</button>
+              <button id="tabSsh" class="tab" type="button">SSH (서버 IP)</button>
+            </div>
+          </div>
+
+          <div id="sshControls" class="ssh-controls" style="display:none;">
+            <div class="form-grid">
+              <label class="form-item">
+                <span class="form-label">Server IP/Host</span>
+                <input id="sshHost" class="input" placeholder="예: 3.34.12.56" />
+              </label>
+              <label class="form-item">
+                <span class="form-label">Port</span>
+                <input id="sshPort" class="input" value="22" />
+              </label>
+              <label class="form-item">
+                <span class="form-label">Username</span>
+                <input id="sshUser" class="input" placeholder="예: ec2-user / ubuntu" />
+              </label>
+              <label class="form-item">
+                <span class="form-label">Password (선택)</span>
+                <input id="sshPass" class="input" type="password" placeholder="키 기반이면 비워도 됨" />
+              </label>
+              <label class="form-item form-item-wide">
+                <span class="form-label">Private Key (선택, PEM 내용 붙여넣기)</span>
+                <textarea id="sshKey" class="textarea" rows="6" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----
+...
+-----END OPENSSH PRIVATE KEY-----"></textarea>
+              </label>
+            </div>
+            <div class="btn-row">
+              <button id="btnSshConnect" class="btn" type="button">SSH 연결</button>
+              <button id="btnSshDisconnect" class="btn outline" type="button" disabled>연결 해제</button>
+              <span class="small muted" id="sshState">상태: 대기</span>
+            </div>
+          </div>
+
+          <div id="awsTerm" class="terminal"></div>
+          <div id="sshTerm" class="terminal" style="display:none;"></div>
         </div>
       </div>
     </section>
-
-    <section id="hardware" class="section">
-      <div class="section-head">
-        <h2>1) Hardware & 인프라 전략 (Energy & Cooling)</h2>
-        <p class="muted">전력·냉각 비용을 줄이고, 장애에 강한 구조를 만드는 전략</p>
-      </div>
-
-      <div class="grid">
-        <article class="card feature">
-          <h3>1. 북극권/한랭 지역 입지 (Arctic Data Center)</h3>
-          <ul>
-            <li>차가운 외기를 활용해 냉각 비용을 크게 절감</li>
-            <li>과열 위험 감소로 하드웨어 수명 증가</li>
-            <li>냉각 장비 의존도를 낮춰 운영 안정성 향상</li>
-          </ul>
-          <div class="tag-row">
-            <span class="tag">Free Cooling</span>
-            <span class="tag">CAPEX↓</span>
-            <span class="tag">안정성↑</span>
-          </div>
-        </article>
-
-        <article class="card feature">
-          <h3>2. 폐열 재활용 + 재생에너지 결합</h3>
-          <ul>
-            <li>서버 폐열 → 난방/온수/온실/지역 열공급으로 전환</li>
-            <li>태양광/풍력 자가 발전으로 외부 전력 의존도 감소</li>
-            <li>PUE 개선 + ESG/친환경 브랜딩 강화</li>
-            <li>ESS 연계로 정전 시 핵심 설비 가동 유지</li>
-          </ul>
-          <div class="tag-row">
-            <span class="tag">Waste Heat</span>
-            <span class="tag">Renewable</span>
-            <span class="tag">ESS</span>
-          </div>
-        </article>
-
-        <article class="card feature">
-          <h3>3. 등급별 정전 대비 (Tier-based Backup)</h3>
-          <ul>
-            <li>서버 중요도에 따라 UPS/발전기 우선순위 차등</li>
-            <li>핵심 서비스는 즉시 유지, 일반 서비스는 순차 복구</li>
-            <li>비용 최적화 + 장애 시 핵심 서비스 유지</li>
-          </ul>
-          <div class="tag-row">
-            <span class="tag">Tiering</span>
-            <span class="tag">UPS</span>
-            <span class="tag">DR</span>
-          </div>
-        </article>
-
-        <article class="card feature">
-          <h3>4. 서버에서 AI 실행 + 물리 관리 연동</h3>
-          <ul>
-            <li>시설 제어(팬/냉각/전력 분배)와 AI가 연동</li>
-            <li>온도 상승 → 팬 속도 조절 / 부하 분산 / 위험 노드 격리</li>
-            <li>사람이 “고치기 전에” AI가 “먼저 안정화”</li>
-          </ul>
-          <div class="tag-row">
-            <span class="tag">BMS 연동</span>
-            <span class="tag">자동 격리</span>
-            <span class="tag">오토스케일</span>
-          </div>
-        </article>
-      </div>
-    </section>
-
-    <section id="software" class="section">
-      <div class="section-head">
-        <h2>2) Software & AI 기반 운영 (AI-Driven Management)</h2>
-        <p class="muted">Monitoring → Anomaly Detection → Self-Healing</p>
-      </div>
-
-      <div class="grid2">
-        <div class="card">
-          <h3>AI 기반 통합 운영 시스템</h3>
-          <ol>
-            <li><b>초 단위 메트릭 수집</b>: CPU/RAM/Disk/Network/온도</li>
-            <li><b>정상 패턴 학습</b>: 트래픽 폭주, 누수, 비정상 I/O, 이상 포트 조기 감지</li>
-            <li><b>자동 대응</b>: 부하 분산, 자동 재시작, 위험 노드 격리, 레이트리밋</li>
-          </ol>
-          <div class="callout">
-            목표: 다운타임을 줄이고 “자율 운영형 데이터센터”로 확장
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>Self-Healing 자동 조치 예시</h3>
-          <div class="action-list">
-            <div class="action">
-              <div class="action-title">Load Balancing</div>
-              <div class="muted">과부하 노드에서 트래픽을 분산</div>
-            </div>
-            <div class="action">
-              <div class="action-title">Auto Restart</div>
-              <div class="muted">비정상 컨테이너/서비스를 안전 재시작</div>
-            </div>
-            <div class="action">
-              <div class="action-title">Node Isolation</div>
-              <div class="muted">위험 노드 격리로 장애 확산 차단</div>
-            </div>
-            <div class="action">
-              <div class="action-title">Rate Limit</div>
-              <div class="muted">폭주 트래픽 제한으로 안정화</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="dashboard" class="section">
-      <div class="section-head">
-        <h2>Emoji Dashboard (직관적 상태 표시)</h2>
-        <p class="muted">관리자가 숫자 보기 전에, 표정만 보고도 상태를 파악</p>
-      </div>
-
-      <div class="grid2">
-        <div class="card">
-          <h3>상태 테이블</h3>
-          <table class="table">
-            <thead>
-              <tr>
-                <th>상태</th>
-                <th>이모티콘</th>
-                <th>기준 예시</th>
-                <th>조치</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>최상</td>
-                <td class="center">😎</td>
-                <td>리소스 여유 + 온도 안정</td>
-                <td>유지</td>
-              </tr>
-              <tr>
-                <td>정상</td>
-                <td class="center">🙂</td>
-                <td>서비스 정상 동작</td>
-                <td>모니터링 유지</td>
-              </tr>
-              <tr>
-                <td>주의</td>
-                <td class="center">🤨</td>
-                <td>CPU/RAM 80%↑, 온도 상승 시작</td>
-                <td>부하 분산 검토</td>
-              </tr>
-              <tr>
-                <td>위험</td>
-                <td class="center">😡</td>
-                <td>과열/지연/오류 급증</td>
-                <td>긴급 점검 + 냉각 강화</td>
-              </tr>
-              <tr>
-                <td>다운</td>
-                <td class="center">😵</td>
-                <td>응답 없음/정전/장애</td>
-                <td>즉시 복구 + 백업 가동</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h3>시나리오 버튼 (테스트)</h3>
-          <div class="scenario">
-            <button class="btn outline" data-scn="spike" type="button">트래픽 폭주</button>
-            <button class="btn outline" data-scn="overheat" type="button">과열</button>
-            <button class="btn outline" data-scn="leak" type="button">메모리 누수</button>
-            <button class="btn outline" data-scn="down" type="button">다운(정전)</button>
-          </div>
-
-          <div class="divider"></div>
-
-          <h4 class="h4">AI 추천 조치</h4>
-          <ul id="actionBox" class="action-box">
-            <li class="muted">아직 데이터가 없습니다. “1회 업데이트” 또는 시나리오 버튼을 눌러보세요.</li>
-          </ul>
-
-          <h4 class="h4">이벤트 로그</h4>
-          <div id="logBox" class="log"></div>
-        </div>
-      </div>
-    </section>
-
-    <section id="stack" class="section">
-      <div class="section-head">
-        <h2>Tech Stack</h2>
-        <p class="muted">프론트: HTML/CSS/TS · 백: TS(Node) + Python(분석)</p>
-      </div>
-
-      <div class="grid">
-        <div class="card">
-          <h3>Frontend</h3>
-          <ul>
-            <li>정적 페이지 + 실시간 대시보드 UI</li>
-            <li>TypeScript로 메트릭 갱신/시나리오 시뮬레이션</li>
-            <li>백엔드 없으면 데모 모드로 자동 전환</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Backend (Node + TS)</h3>
-          <ul>
-            <li>/api/metrics: 메트릭 생성/반환</li>
-            <li>/api/emoji: 이모지 상태 판정(내장 룰 + Python 옵션)</li>
-            <li>프론트 정적 파일 서빙</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Python Analyzer (옵션)</h3>
-          <ul>
-            <li>메트릭을 받아 상태/조치 추천을 JSON으로 반환</li>
-            <li>추후 ML 기반 이상탐지 모델로 교체 가능</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <footer class="footer">
-      <div class="muted">© 아이디어톤 초안 · 필요하면 다음 단계로 “실제 모니터링 + 데이터 수집”까지 확장 가능</div>
-    </footer>
   </main>
 
   <script type="module" src="./dist/main.js"></script>
 </body>
 </html>
+
