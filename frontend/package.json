@@ -1,0 +1,13 @@
+{
+  "name": "s2w-h5c-frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsc -w -p tsconfig.json",
+    "clean": "powershell -NoProfile -Command \"Remove-Item -Recurse -Force dist -ErrorAction SilentlyContinue\""
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
